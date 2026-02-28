@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS property_images (
   id          VARCHAR(36)  PRIMARY KEY,
   property_id VARCHAR(36)  NOT NULL,
   image_url   VARCHAR(512) NOT NULL,
-  is_primary  TINYINT(1)   NOT NULL DEFAULT 0,
+  is_primary  BOOLEAN      NOT NULL DEFAULT FALSE,
   created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE
 );

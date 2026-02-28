@@ -6,6 +6,8 @@ const { authenticateToken } = require('../middleware/auth');
 const { sanitizeBody } = require('../middleware/sanitize');
 const logActivity = require('../middleware/logger');
 
+const CONFLICT_BUFFER_MS = 30 * 60 * 1000; // 30 minutes
+
 const paginate = (total, data, page, limit) => ({
   data,
   pagination: { page, limit, total, pages: Math.ceil(total / limit) }
@@ -67,11 +69,10 @@ router.post('/', authenticateToken, sanitizeBody, async (req, res) => {
     }
 
     // Conflict check with 30-minute buffer
-    const buffer = 30 * 60 * 1000;
     const newStart = new Date(start).getTime();
     const newEnd = new Date(end).getTime();
-    const bufferStart = new Date(newStart - buffer).toISOString().slice(0, 19).replace('T', ' ');
-    const bufferEnd = new Date(newEnd + buffer).toISOString().slice(0, 19).replace('T', ' ');
+    const bufferStart = new Date(newStart - CONFLICT_BUFFER_MS).toISOString().slice(0, 19).replace('T', ' ');
+    const bufferEnd = new Date(newEnd + CONFLICT_BUFFER_MS).toISOString().slice(0, 19).replace('T', ' ');
 
     const [conflicts] = await pool.execute(
       'SELECT id FROM calendar_events WHERE agent_id = ? AND start_time < ? AND end_time > ?',
