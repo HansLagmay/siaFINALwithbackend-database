@@ -1,0 +1,37 @@
+# SIA Backend
+
+This is the backend for the SIA application.
+
+## Setup Instructions
+
+1. Clone the repository
+2. Install dependencies
+   ```bash
+   npm install
+   ```
+3. Create a `.env` file based on the `.env.example` file
+4. Run the database migrations
+   ```bash
+   npm run migrate
+   ```
+5. Seed the database with sample data
+   ```bash
+   npm run seed
+   ```
+6. Start the server
+   ```bash
+   npm start
+   ```
+
+## API Endpoints
+
+- POST `/api/login` - User login
+- GET `/api/users` - Get users
+- POST `/api/users` - Create a new user
+- PUT `/api/users/:id` - Update user by ID
+- DELETE `/api/users/:id` - Delete user by ID
+- GET `/api/properties` - Get properties
+- POST `/api/properties` - Create a new property
+- PUT `/api/properties/:id` - Update property by ID
+- DELETE `/api/properties/:id` - Delete property by ID
+- ...
