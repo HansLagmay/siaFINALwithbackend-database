@@ -12,12 +12,12 @@ import type { TableRow } from '../../types/api';
 
 export default function UsersSection() {
   const [metadata, setMetadata] = useState<FileMetadata | null>(null);
+  const [newMetadata, setNewMetadata] = useState<FileMetadata | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [newAgents, setNewAgents] = useState<User[]>([]);
   const [showTable, setShowTable] = useState(false);
   const [showNewAgents, setShowNewAgents] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const {
     dialogState,
     toastState,
@@ -35,18 +35,19 @@ export default function UsersSection() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [metaRes, usersRes, newAgentsRes] = await Promise.all([
+      const [metaRes, newMetaRes, usersRes, newAgentsRes] = await Promise.all([
         databaseAPI.getFileMetadata('users.json'),
+        databaseAPI.getFileMetadata('new-agents.json'),
         databaseAPI.getFile('users.json'),
         databaseAPI.getRecent('agents')
       ]);
       
       setMetadata(metaRes.data);
+      setNewMetadata(newMetaRes.data);
       setUsers(usersRes.data as User[]);
       setNewAgents(newAgentsRes.data as User[]);
     } catch (error) {
       console.error('Failed to fetch users data:', error);
-      setError('Could not load data. Make sure the backend is running and the database is set up.');
     } finally {
       setLoading(false);
     }
@@ -93,15 +94,6 @@ export default function UsersSection() {
     return <div className="text-center py-8">Loading users data...</div>;
   }
 
-  if (error) {
-    return (
-      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-6 rounded-lg text-center">
-        <p className="font-semibold">⚠️ Unable to load data</p>
-        <p className="text-sm mt-1">{error}</p>
-      </div>
-    );
-  }
-
   const { admins, agents } = getRoleBreakdown();
 
   return (
@@ -109,7 +101,7 @@ export default function UsersSection() {
       {/* All Users Section */}
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-gray-900">👥 All Users (MySQL: users)</h3>
+          <h3 className="text-xl font-bold text-gray-900">👥 All Users (users.json)</h3>
           <ExportButtons onExport={(format) => handleExport('users.json', format)} />
         </div>
         
@@ -148,7 +140,7 @@ export default function UsersSection() {
       {/* New Agents Section */}
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-gray-900">⭐ Recently Added Agents (Last 7 Days)</h3>
+          <h3 className="text-xl font-bold text-gray-900">⭐ Recently Added Agents (new-agents.json)</h3>
           {newAgents.length > 0 && (
             <button
               onClick={handleClearNew}
@@ -158,6 +150,8 @@ export default function UsersSection() {
             </button>
           )}
         </div>
+        
+        <FileMetadataComponent metadata={newMetadata} />
 
         {newAgents.length === 0 ? (
           <div className="mt-4 text-center py-8 text-gray-500">

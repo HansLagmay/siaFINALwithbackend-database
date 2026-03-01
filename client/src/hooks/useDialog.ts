@@ -16,6 +16,17 @@ export interface PromptConfig {
   inputType?: 'text' | 'number';
 }
 
+export interface SelectOption {
+  value: string;
+  label: string;
+}
+
+export interface SelectConfig {
+  title: string;
+  message: string;
+  options: SelectOption[];
+}
+
 export interface ToastConfig {
   message: string;
   type: 'success' | 'error' | 'info' | 'warning';
@@ -36,6 +47,13 @@ interface PromptDialogState {
   resolve: (value: string | null) => void;
 }
 
+interface SelectDialogState {
+  type: 'select';
+  isOpen: boolean;
+  config: SelectConfig;
+  resolve: (value: string | null) => void;
+}
+
 interface NoDialogState {
   type: null;
   isOpen: boolean;
@@ -43,7 +61,7 @@ interface NoDialogState {
   resolve: null;
 }
 
-type DialogState = ConfirmDialogState | PromptDialogState | NoDialogState;
+type DialogState = ConfirmDialogState | PromptDialogState | SelectDialogState | NoDialogState;
 
 interface ToastState {
   message: string;
@@ -89,6 +107,17 @@ export const useDialog = () => {
     });
   }, []);
 
+  const openSelect = useCallback((config: SelectConfig): Promise<string | null> => {
+    return new Promise((resolve) => {
+      setDialogState({
+        type: 'select',
+        isOpen: true,
+        config,
+        resolve
+      });
+    });
+  }, []);
+
   const showToast = useCallback((config: ToastConfig) => {
     setToastState({
       message: config.message,
@@ -126,6 +155,20 @@ export const useDialog = () => {
     setDialogState({ type: null, isOpen: false, config: null, resolve: null });
   }, [dialogState]);
 
+  const handleSelectSubmit = useCallback((value: string) => {
+    if (dialogState.type === 'select' && dialogState.resolve) {
+      dialogState.resolve(value);
+    }
+    setDialogState({ type: null, isOpen: false, config: null, resolve: null });
+  }, [dialogState]);
+
+  const handleSelectCancel = useCallback(() => {
+    if (dialogState.type === 'select' && dialogState.resolve) {
+      dialogState.resolve(null);
+    }
+    setDialogState({ type: null, isOpen: false, config: null, resolve: null });
+  }, [dialogState]);
+
   const closeToast = useCallback(() => {
     setToastState(prev => ({ ...prev, isVisible: false }));
   }, []);
@@ -134,6 +177,7 @@ export const useDialog = () => {
     // Dialog methods
     openConfirm,
     openPrompt,
+    openSelect,
     showToast,
     
     // Dialog state
@@ -145,6 +189,8 @@ export const useDialog = () => {
     handleCancel,
     handlePromptSubmit,
     handlePromptCancel,
+    handleSelectSubmit,
+    handleSelectCancel,
     closeToast
   };
 };

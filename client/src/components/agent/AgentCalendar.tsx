@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { calendarAPI } from '../../services/api';
+import { calendarAPI, usersAPI } from '../../services/api';
 import { inquiriesAPI } from '../../services/api';
 import type { CalendarEvent, Inquiry, User } from '../../types';
 import ScheduleViewingModal from './ScheduleViewingModal';
@@ -16,6 +16,7 @@ const AgentCalendar = ({ user }: AgentCalendarProps) => {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [effectiveUser, setEffectiveUser] = useState<User | null>(null);
     const [inquiryMap, setInquiryMap] = useState<Record<string, Inquiry>>({});
+    const [agentMap, setAgentMap] = useState<Record<string, User>>({});
     const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
     const [currentMonth, setCurrentMonth] = useState(() => new Date());
     const [selectedDate, setSelectedDate] = useState(() => new Date());
@@ -29,6 +30,7 @@ const AgentCalendar = ({ user }: AgentCalendarProps) => {
     if (effectiveUser) {
       loadEvents();
       loadAgentInquiries(effectiveUser);
+      loadAgents();
     } else {
       setLoading(false);
     }
@@ -48,6 +50,17 @@ const AgentCalendar = ({ user }: AgentCalendarProps) => {
       setError('Failed to load calendar events. Please try again later.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadAgents = async () => {
+    try {
+      const res = await usersAPI.getAgents();
+      const map: Record<string, User> = {};
+      res.data.forEach((agent: User) => { map[agent.id] = agent; });
+      setAgentMap(map);
+    } catch (err) {
+      console.error('Failed to load agents for calendar display:', err);
     }
   };
 
@@ -197,11 +210,12 @@ const AgentCalendar = ({ user }: AgentCalendarProps) => {
                         const linkedInquiry = event.inquiryId ? inquiryMap[event.inquiryId] : undefined;
                         const customerLine = event.description?.split('\n').find(l => l.startsWith('Customer: '));
                         const ticketLine = event.description?.split('\n').find(l => l.startsWith('Ticket: '));
+                        const agent = agentMap[event.agentId];
                         return (
                           <>
                             <p>Customer: <span className="font-semibold">{linkedInquiry?.name || (customerLine ? customerLine.replace('Customer: ', '') : '—')}</span></p>
                             <p>Ticket: <span className="font-mono">{linkedInquiry?.ticketNumber || (ticketLine ? ticketLine.replace('Ticket: ', '') : '—')}</span></p>
-                            <p>Agent: <span className="font-mono">{event.agentId}</span></p>
+                            <p>Agent: <span className="font-semibold">{agent ? agent.name : event.agentId}</span></p>
                             {linkedInquiry?.propertyTitle && (
                               <p>Property: <span className="font-semibold">{linkedInquiry.propertyTitle}</span></p>
                             )}

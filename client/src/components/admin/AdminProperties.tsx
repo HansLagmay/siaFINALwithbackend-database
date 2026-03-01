@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { propertiesAPI, usersAPI } from '../../services/api';
 import ConfirmDialog from '../shared/ConfirmDialog';
 import PromptDialog from '../shared/PromptDialog';
+import SelectDialog from '../shared/SelectDialog';
 import Toast from '../shared/Toast';
 import type { Property, User } from '../../types';
 import type { PropertyUpdateData } from '../../types/api';
@@ -14,6 +15,8 @@ const AdminProperties = () => {
   const [agents, setAgents] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
   const [createForm, setCreateForm] = useState<PropertyFormData>({
     title: '',
     type: 'House',
@@ -32,11 +35,14 @@ const AdminProperties = () => {
     toastState,
     openConfirm,
     openPrompt,
+    openSelect,
     showToast,
     handleConfirm,
     handleCancel,
     handlePromptSubmit,
     handlePromptCancel,
+    handleSelectSubmit,
+    handleSelectCancel,
     closeToast
   } = useDialog();
 
@@ -68,12 +74,54 @@ const AdminProperties = () => {
     }
   };
 
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploadingImages(true);
+    try {
+      const formData = new FormData();
+      Array.from(files).forEach(file => {
+        formData.append('images', file);
+      });
+
+      const response = await propertiesAPI.uploadImages(formData);
+      const newUrls = response.data.imageUrls;
+      setUploadedImageUrls(prev => [...prev, ...newUrls]);
+      
+      // Set first image as primary imageUrl if not set
+      if (!createForm.imageUrl && newUrls.length > 0) {
+        setCreateForm({ ...createForm, imageUrl: newUrls[0] });
+      }
+      
+      showToast({ type: 'success', message: `Uploaded ${files.length} image(s) successfully!` });
+    } catch (error) {
+      console.error('Failed to upload images:', error);
+      showToast({ type: 'error', message: 'Failed to upload images' });
+    } finally {
+      setUploadingImages(false);
+    }
+  };
+
+  const removeUploadedImage = (urlToRemove: string) => {
+    setUploadedImageUrls(prev => prev.filter(url => url !== urlToRemove));
+    // If removing the primary image, set a new one
+    if (createForm.imageUrl === urlToRemove) {
+      const remaining = uploadedImageUrls.filter(url => url !== urlToRemove);
+      setCreateForm({ ...createForm, imageUrl: remaining[0] || '' });
+    }
+  };
+
   const handleCreateProperty = async () => {
     try {
       if (!createForm.title || !createForm.price || !createForm.location || !createForm.description) {
         showToast({ type: 'error', message: 'Title, price, location, and description are required' });
         return;
       }
+      
+      // Use first uploaded image as primary if imageUrl is not set
+      const primaryImage = createForm.imageUrl || (uploadedImageUrls.length > 0 ? uploadedImageUrls[0] : '');
+      
       const payload: Partial<Property> = {
         title: createForm.title,
         type: createForm.type,
@@ -85,7 +133,8 @@ const AdminProperties = () => {
         description: createForm.description,
         features: createForm.features,
         status: 'available',
-        imageUrl: createForm.imageUrl,
+        imageUrl: primaryImage,
+        images: uploadedImageUrls.length > 0 ? uploadedImageUrls : (primaryImage ? [primaryImage] : []),
         statusHistory: [],
         viewCount: 0,
         viewHistory: [],
@@ -98,6 +147,7 @@ const AdminProperties = () => {
       await propertiesAPI.create(payload);
       await loadProperties();
       setShowCreate(false);
+      setUploadedImageUrls([]);
       setCreateForm({
         title: '',
         type: 'House',
@@ -163,30 +213,12 @@ const AdminProperties = () => {
         
         const salePrice = salePriceStr ? parseFloat(salePriceStr) : property.price;
         
-        // Get commission rate
-        const commissionRateStr = await openPrompt({
-          title: 'Enter Commission Rate',
-          message: 'Enter commission rate percentage (e.g., 3 for 3%):',
-          defaultValue: '3',
-          inputType: 'number'
-        });
-        
-        const commissionRate = commissionRateStr ? parseFloat(commissionRateStr) : 3;
-        const commissionAmount = (salePrice * commissionRate) / 100;
-        
         updateData = {
           ...updateData,
           soldBy: selectedAgent.name,
           soldByAgentId: selectedAgent.id,
           soldAt: new Date().toISOString(),
           salePrice: salePrice,
-          commission: {
-            rate: commissionRate,
-            amount: commissionAmount,
-            status: 'pending',
-            paidAt: undefined,
-            paidBy: undefined
-          },
           statusHistory: [
             ...(property.statusHistory || []),
             {
@@ -194,7 +226,7 @@ const AdminProperties = () => {
               changedBy: admin.id,
               changedByName: admin.name,
               changedAt: new Date().toISOString(),
-              reason: `Sold by ${selectedAgent.name} for ₱${salePrice.toLocaleString()} (Commission: ${commissionRate}% = ₱${commissionAmount.toLocaleString()})`
+              reason: `Sold by ${selectedAgent.name} for ₱${salePrice.toLocaleString()}`
             }
           ]
         };
@@ -209,53 +241,19 @@ const AdminProperties = () => {
     }
   };
 
-  const handleMarkCommissionPaid = async (property: Property) => {
-    if (!property.commission || property.commission.status === 'paid') {
-      showToast({ type: 'error', message: 'Commission already paid or not available' });
-      return;
-    }
-
-    const confirmed = await openConfirm({
-      title: 'Mark Commission as Paid',
-      message: `Mark commission of ₱${property.commission.amount.toLocaleString()} for ${property.title} as paid?`,
-      confirmText: 'Mark as Paid',
-      cancelText: 'Cancel',
-      variant: 'info'
-    });
-    
-    if (!confirmed) return;
-
-    const admin = getUser('admin') || getUser('superadmin') || { id: 'system', name: 'Admin' };
-
-    try {
-      const updateData: PropertyUpdateData = {
-        commission: {
-          ...property.commission,
-          status: 'paid',
-          paidAt: new Date().toISOString(),
-          paidBy: admin.name
-        }
-      };
-
-      await propertiesAPI.update(property.id, updateData);
-      await loadProperties();
-      showToast({ type: 'success', message: 'Commission marked as paid successfully!' });
-    } catch (error) {
-      console.error('Failed to mark commission as paid:', error);
-      showToast({ type: 'error', message: 'Failed to update commission status' });
-    }
-  };
-
   const handleSetReservation = async (property: Property) => {
     if (property.status !== 'available') {
       showToast({ type: 'error', message: 'Only available properties can be reserved' });
       return;
     }
 
-    const agentId = await openPrompt({
+    const agentId = await openSelect({
       title: 'Reserve Property',
-      message: `Select agent to reserve this property for:`,
-      placeholder: `Available agents: ${agents.map(a => `${a.name} (${a.id})`).join(', ')}`
+      message: 'Select agent to reserve this property for:',
+      options: agents.map(agent => ({
+        value: agent.id,
+        label: `${agent.name} (${agent.email})`
+      }))
     });
     
     if (!agentId) return;
@@ -428,16 +426,84 @@ const AdminProperties = () => {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               />
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Image URL</label>
-              <input
-                type="text"
-                value={createForm.imageUrl}
-                onChange={(e) => setCreateForm({ ...createForm, imageUrl: e.target.value })}
-                placeholder="https://example.com/property.jpg"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
+            
+            {/* Image Upload Section */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Property Images</label>
+              
+              <div className="space-y-4">
+                {/* Upload Button */}
+                <div className="flex gap-3">
+                  <label className="flex-1 cursor-pointer">
+                    <div className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-center font-semibold transition flex items-center justify-center gap-2">
+                      {uploadingImages ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <span>Uploading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <span>Upload Images</span>
+                        </>
+                      )}
+                    </div>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/jpeg,image/jpg,image/png,image/webp"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      disabled={uploadingImages}
+                    />
+                  </label>
+                  
+                  <input
+                    type="text"
+                    value={createForm.imageUrl}
+                    onChange={(e) => setCreateForm({ ...createForm, imageUrl: e.target.value })}
+                    placeholder="Or paste image URL"
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                
+                <p className="text-xs text-gray-600">
+                  📸 Upload multiple images (JPG, PNG, WEBP). Max 5MB per image. First image will be the cover photo.
+                </p>
+                
+                {/* Uploaded Images Preview */}
+                {uploadedImageUrls.length > 0 && (
+                  <div className="grid grid-cols-4 gap-3">
+                    {uploadedImageUrls.map((url, index) => (
+                      <div key={url} className="relative group">
+                        <img
+                          src={url}
+                          alt={`Upload ${index + 1}`}
+                          className="w-full h-24 object-cover rounded-lg border-2 border-gray-300"
+                        />
+                        {index === 0 && (
+                          <div className="absolute top-1 left-1 bg-blue-600 text-white text-xs px-2 py-1 rounded">
+                            Cover
+                          </div>
+                        )}
+                        <button
+                          onClick={() => removeUploadedImage(url)}
+                          className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Remove image"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
+            
             <div className="md:col-span-2">
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Description <span className="text-red-500">*</span>
@@ -475,7 +541,6 @@ const AdminProperties = () => {
             <strong>💡 Quick Actions:</strong><br/>
             • <strong>Status Dropdown:</strong> Change property status (Draft → Available → Reserved → Sold)<br/>
             • <strong>Reserve Button:</strong> Temporarily hold an Available property for a specific agent (prevents others from claiming it)<br/>
-            • <strong>Pay Commission:</strong> Mark commission as paid after a successful sale<br/>
             • <strong>Delete:</strong> Permanently remove property from system
           </p>
         </div>
@@ -569,13 +634,9 @@ const AdminProperties = () => {
                       <p className="text-xs text-gray-500">
                         Sold by: {property.soldBy}
                       </p>
-                      {property.commission && (
+                      {property.salePrice && (
                         <p className="text-xs text-gray-500">
-                          Commission: ₱{property.commission.amount.toLocaleString()} ({property.commission.rate}%)
-                          {' - '}
-                          <span className={property.commission.status === 'paid' ? 'text-green-600' : 'text-yellow-600'}>
-                            {property.commission.status === 'paid' ? 'Paid' : 'Pending'}
-                          </span>
+                          Sale Price: ₱{property.salePrice.toLocaleString()}
                         </p>
                       )}
                     </div>
@@ -589,15 +650,6 @@ const AdminProperties = () => {
                       title="⏰ Reserve this property for a specific agent for a limited time (default 24 hours). This prevents other agents from claiming it while your designated agent works on it."
                     >
                       🔒 Reserve
-                    </button>
-                  )}
-                  {property.commission && property.commission.status === 'pending' && (
-                    <button
-                      onClick={() => handleMarkCommissionPaid(property)}
-                      className="text-green-600 hover:text-green-900 mr-4 font-semibold"
-                      title="Mark commission as paid to the agent"
-                    >
-                      💵 Pay
                     </button>
                   )}
                   <button
@@ -638,6 +690,17 @@ const AdminProperties = () => {
           inputType={dialogState.config.inputType}
           onSubmit={handlePromptSubmit}
           onCancel={handlePromptCancel}
+        />
+      )}
+      
+      {dialogState.type === 'select' && dialogState.config && 'options' in dialogState.config && (
+        <SelectDialog
+          isOpen={dialogState.isOpen}
+          title={dialogState.config.title}
+          message={dialogState.config.message}
+          options={dialogState.config.options}
+          onSubmit={handleSelectSubmit}
+          onCancel={handleSelectCancel}
         />
       )}
       

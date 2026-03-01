@@ -13,7 +13,6 @@ export default function ActivityLogViewer() {
   const [displayLogs, setDisplayLogs] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   
   // Toast state
   const [toast, setToast] = useState<{ message: string; type: ToastProps['type']; isVisible: boolean }>({
@@ -40,7 +39,6 @@ export default function ActivityLogViewer() {
       setDisplayLogs((logsRes.data as ActivityLog[]).slice(-10).reverse());
     } catch (error) {
       console.error('Failed to fetch activity log:', error);
-      setError('Could not load data. Make sure the backend is running and the database is set up.');
     } finally {
       setLoading(false);
     }
@@ -92,20 +90,11 @@ export default function ActivityLogViewer() {
     return <div className="text-center py-8">Loading activity log...</div>;
   }
 
-  if (error) {
-    return (
-      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-6 rounded-lg text-center">
-        <p className="font-semibold">⚠️ Unable to load data</p>
-        <p className="text-sm mt-1">{error}</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-gray-900">📋 Activity Log (MySQL: activity_log)</h3>
+          <h3 className="text-xl font-bold text-gray-900">📋 Activity Log (activity-log.json)</h3>
           <ExportButtons onExport={handleExport} />
         </div>
         

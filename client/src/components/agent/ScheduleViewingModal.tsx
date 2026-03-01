@@ -138,6 +138,10 @@ const ScheduleViewingModal = ({ user, inquiry, event, initialDate, onClose, onSu
             }
           ]
         });
+        
+        // Note: Property status is kept as 'available' or 'reserved' to allow other buyers to inquire
+        // Property should only change to 'pending' when an offer is accepted
+        // and 'under-contract' when contracts are signed by both parties
       }
       
       alert(isEdit ? 'Viewing updated successfully!' : 'Viewing scheduled successfully!');

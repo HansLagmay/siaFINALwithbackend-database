@@ -1,32 +1,31 @@
 import { useState, useEffect, useRef } from 'react';
+import { SelectOption } from '../../hooks/useDialog';
 
-export interface PromptDialogProps {
+export interface SelectDialogProps {
   isOpen: boolean;
   title: string;
   message: string;
-  placeholder?: string;
-  defaultValue?: string;
-  inputType?: 'text' | 'number';
+  options: SelectOption[];
   onSubmit: (value: string) => void;
   onCancel: () => void;
 }
 
-const PromptDialog = ({
+const SelectDialog = ({
   isOpen,
   title,
   message,
-  placeholder = '',
-  defaultValue = '',
-  inputType = 'text',
+  options,
   onSubmit,
   onCancel
-}: PromptDialogProps) => {
-  const [value, setValue] = useState(defaultValue);
-  const inputRef = useRef<HTMLInputElement>(null);
+}: SelectDialogProps) => {
+  const [value, setValue] = useState(options[0]?.value || '');
+  const selectRef = useRef<HTMLSelectElement>(null);
 
   useEffect(() => {
-    setValue(defaultValue);
-  }, [defaultValue, isOpen]);
+    if (options[0]?.value) {
+      setValue(options[0].value);
+    }
+  }, [options, isOpen]);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -38,8 +37,8 @@ const PromptDialog = ({
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
-      // Focus input after render
-      setTimeout(() => inputRef.current?.focus(), 100);
+      // Focus select after render
+      setTimeout(() => selectRef.current?.focus(), 100);
     }
 
     return () => {
@@ -60,8 +59,8 @@ const PromptDialog = ({
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="prompt-dialog-title"
-      aria-describedby="prompt-dialog-description"
+      aria-labelledby="select-dialog-title"
+      aria-describedby="select-dialog-description"
       onClick={(e) => {
         if (e.target === e.currentTarget) onCancel();
       }}
@@ -72,25 +71,29 @@ const PromptDialog = ({
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0 text-blue-600">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 id="prompt-dialog-title" className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 id="select-dialog-title" className="text-lg font-semibold text-gray-900 mb-2">
                   {title}
                 </h3>
-                <p id="prompt-dialog-description" className="text-sm text-gray-600 mb-4">
+                <p id="select-dialog-description" className="text-sm text-gray-600 mb-4">
                   {message}
                 </p>
-                <input
-                  ref={inputRef}
-                  type={inputType}
+                <select
+                  ref={selectRef}
                   value={value}
                   onChange={(e) => setValue(e.target.value)}
-                  placeholder={placeholder}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                   aria-label={message}
-                />
+                >
+                  {options.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
@@ -106,7 +109,7 @@ const PromptDialog = ({
               type="submit"
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition"
             >
-              Submit
+              Select
             </button>
           </div>
         </form>
@@ -115,4 +118,4 @@ const PromptDialog = ({
   );
 };
 
-export default PromptDialog;
+export default SelectDialog;
