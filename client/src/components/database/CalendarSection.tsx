@@ -14,6 +14,7 @@ export default function CalendarSection() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [showTable, setShowTable] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toastState, showToast, closeToast } = useDialog();
 
   useEffect(() => {
@@ -32,6 +33,7 @@ export default function CalendarSection() {
       setEvents(eventsRes.data as CalendarEvent[]);
     } catch (error) {
       console.error('Failed to fetch calendar data:', error);
+      setError('Could not load data. Make sure the backend is running and the database is set up.');
     } finally {
       setLoading(false);
     }
@@ -53,6 +55,15 @@ export default function CalendarSection() {
 
   if (loading) {
     return <div className="text-center py-8">Loading calendar data...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-6 rounded-lg text-center">
+        <p className="font-semibold">⚠️ Unable to load data</p>
+        <p className="text-sm mt-1">{error}</p>
+      </div>
+    );
   }
 
   const eventTypeBreakdown = getEventTypeBreakdown();

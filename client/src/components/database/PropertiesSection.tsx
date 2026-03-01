@@ -18,6 +18,7 @@ export default function PropertiesSection() {
   const [showTable, setShowTable] = useState(false);
   const [showNewProperties, setShowNewProperties] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const {
     dialogState,
     toastState,
@@ -48,6 +49,7 @@ export default function PropertiesSection() {
       setNewProperties(newPropsRes.data as Property[]);
     } catch (error) {
       console.error('Failed to fetch properties data:', error);
+      setError('Could not load data. Make sure the backend is running and the database is set up.');
     } finally {
       setLoading(false);
     }
@@ -86,6 +88,15 @@ export default function PropertiesSection() {
 
   if (loading) {
     return <div className="text-center py-8">Loading properties data...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-6 rounded-lg text-center">
+        <p className="font-semibold">⚠️ Unable to load data</p>
+        <p className="text-sm mt-1">{error}</p>
+      </div>
+    );
   }
 
   return (

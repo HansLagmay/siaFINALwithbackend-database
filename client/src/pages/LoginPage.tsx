@@ -127,10 +127,35 @@ const LoginPage = () => {
         </form>
 
         <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-          <p className="text-sm text-gray-600 font-semibold mb-2">Test Accounts:</p>
-          <div className="text-xs text-gray-600 space-y-1">
-            <p><strong>Admin:</strong> admin@tesproperty.com / admin123</p>
-            <p><strong>Agent:</strong> maria@tesproperty.com / agent123</p>
+          <p className="text-sm text-gray-600 font-semibold mb-3">Quick Demo Login:</p>
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => { setEmail('admin@tesproperty.com'); setPassword('admin123'); }}
+              className="w-full text-left px-3 py-2 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded text-sm transition"
+            >
+              <span className="font-semibold text-blue-700">Admin</span>
+              <span className="text-gray-500 ml-2">admin@tesproperty.com</span>
+              <span className="float-right text-blue-600 font-medium">Click to fill →</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => { setEmail('maria@tesproperty.com'); setPassword('agent123'); }}
+              className="w-full text-left px-3 py-2 bg-green-50 hover:bg-green-100 border border-green-200 rounded text-sm transition"
+            >
+              <span className="font-semibold text-green-700">Agent (Maria)</span>
+              <span className="text-gray-500 ml-2">maria@tesproperty.com</span>
+              <span className="float-right text-green-600 font-medium">Click to fill →</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => { setEmail('juan@tesproperty.com'); setPassword('agent123'); }}
+              className="w-full text-left px-3 py-2 bg-green-50 hover:bg-green-100 border border-green-200 rounded text-sm transition"
+            >
+              <span className="font-semibold text-green-700">Agent (Juan)</span>
+              <span className="text-gray-500 ml-2">juan@tesproperty.com</span>
+              <span className="float-right text-green-600 font-medium">Click to fill →</span>
+            </button>
           </div>
         </div>
 

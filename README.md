@@ -19,6 +19,54 @@ Key highlights:
 
 ---
 
+## 🚀 Fullstack Quick Start
+
+This repository is a **fullstack monorepo** — run both the React frontend and Express+MySQL backend with a single command.
+
+### Prerequisites
+- Node.js 18+
+- MySQL 8.0+
+
+### Steps
+
+1. **Clone and install**
+   ```bash
+   git clone https://github.com/HansLagmay/siaFINALwithbackend-database.git
+   cd siaFINALwithbackend-database
+   npm run install:all
+   ```
+
+2. **Configure environment**
+   ```bash
+   cp .env.example .env
+   # Edit .env — set DB_PASSWORD and JWT_SECRET
+   ```
+
+3. **Set up database**
+   ```bash
+   npm run db:schema   # Creates all tables in TESdb
+   npm run db:seed     # Inserts demo users and sample data
+   ```
+
+4. **Start the app**
+   ```bash
+   npm run dev
+   ```
+   - 🌐 Frontend: **http://localhost:5173**
+   - 🔌 Backend API: **http://localhost:3000/api**
+
+### Demo Credentials
+
+| Role | Email | Password |
+|------|-------|----------|
+| **Admin** | admin@tesproperty.com | admin123 |
+| **Agent** | maria@tesproperty.com | agent123 |
+| **Agent** | juan@tesproperty.com | agent123 |
+
+> 💡 The Login page has **Quick Demo Login** buttons — just click to auto-fill credentials!
+
+---
+
 ## ✅ Features
 
 - 🔐 **JWT Authentication** — 30-day session tokens, role-based guards (Admin / Agent)
