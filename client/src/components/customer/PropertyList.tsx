@@ -7,6 +7,7 @@ interface PropertyListProps {
 }
 
 const PropertyList = ({ properties, onViewDetails, onInquire }: PropertyListProps) => {
+  // Calculate days on market
   const daysOnMarket = (createdAt: string) => {
     const created = new Date(createdAt);
     const now = new Date();
@@ -66,9 +67,24 @@ const PropertyList = ({ properties, onViewDetails, onInquire }: PropertyListProp
             </p>
 
             <div className="flex items-center gap-4 text-gray-600 text-sm mb-4">
-              <span>{property.bedrooms} Beds</span>
-              <span>{property.bathrooms} Baths</span>
-              <span>{property.area} sqm</span>
+              <span className="flex items-center">
+                <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                </svg>
+                {property.bedrooms} Beds
+              </span>
+              <span className="flex items-center">
+                <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clipRule="evenodd" />
+                </svg>
+                {property.bathrooms} Baths
+              </span>
+              <span className="flex items-center">
+                <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4z" clipRule="evenodd" />
+                </svg>
+                {property.area} sqm
+              </span>
             </div>
 
             <div className="flex gap-2">

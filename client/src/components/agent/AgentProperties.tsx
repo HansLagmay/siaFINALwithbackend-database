@@ -10,6 +10,8 @@ const AgentProperties = () => {
   const [user, setUser] = useState<User | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
   const [draftForm, setDraftForm] = useState<PropertyFormData>({
     title: '',
     type: 'House',
@@ -41,12 +43,54 @@ const AgentProperties = () => {
     }
   };
 
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploadingImages(true);
+    try {
+      const formData = new FormData();
+      Array.from(files).forEach(file => {
+        formData.append('images', file);
+      });
+
+      const response = await propertiesAPI.uploadImages(formData);
+      const newUrls = response.data.imageUrls;
+      setUploadedImageUrls(prev => [...prev, ...newUrls]);
+      
+      // Set first image as primary imageUrl if not set
+      if (!draftForm.imageUrl && newUrls.length > 0) {
+        setDraftForm({ ...draftForm, imageUrl: newUrls[0] });
+      }
+      
+      alert(`✓ Uploaded ${files.length} image(s) successfully!`);
+    } catch (error) {
+      console.error('Failed to upload images:', error);
+      alert('Failed to upload images');
+    } finally {
+      setUploadingImages(false);
+    }
+  };
+
+  const removeUploadedImage = (urlToRemove: string) => {
+    setUploadedImageUrls(prev => prev.filter(url => url !== urlToRemove));
+    // If removing the primary image, set a new one
+    if (draftForm.imageUrl === urlToRemove) {
+      const remaining = uploadedImageUrls.filter(url => url !== urlToRemove);
+      setDraftForm({ ...draftForm, imageUrl: remaining[0] || '' });
+    }
+  };
+
   const handleCreateDraft = async () => {
     try {
       if (!draftForm.title) {
         alert('Property title is required');
         return;
       }
+      
+      // Use first uploaded image as primary if imageUrl is not set
+      const primaryImage = draftForm.imageUrl || (uploadedImageUrls.length > 0 ? uploadedImageUrls[0] : '');
+      
       const payload: Partial<Property> = {
         title: draftForm.title,
         type: draftForm.type,
@@ -57,8 +101,9 @@ const AgentProperties = () => {
         area: draftForm.area,
         description: draftForm.description,
         features: draftForm.features,
-        status: 'draft',
-        imageUrl: draftForm.imageUrl,
+        status: draftForm.status,
+        imageUrl: primaryImage,
+        images: uploadedImageUrls.length > 0 ? uploadedImageUrls : (primaryImage ? [primaryImage] : []),
         statusHistory: [],
         viewCount: 0,
         viewHistory: []
@@ -66,6 +111,7 @@ const AgentProperties = () => {
       await propertiesAPI.createDraft(payload);
       await loadProperties();
       setShowCreate(false);
+      setUploadedImageUrls([]);
       setDraftForm({
         title: '',
         type: 'House',
@@ -79,7 +125,10 @@ const AgentProperties = () => {
         status: 'draft',
         imageUrl: ''
       });
-      alert('✓ Draft property created successfully! Admin will review and publish it.');
+      const statusMsg = draftForm.status === 'available' 
+        ? 'Property created and published successfully!' 
+        : 'Draft property created successfully! Admin will review and publish it.';
+      alert(`✓ ${statusMsg}`);
     } catch (error) {
       console.error('Failed to create draft property:', error);
       alert('Failed to create draft property');
@@ -98,15 +147,15 @@ const AgentProperties = () => {
           onClick={() => setShowCreate(s => !s)}
           className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-md transition"
         >
-          {showCreate ? '✕ Close' : '+ Create Draft Property'}
+          {showCreate ? '✕ Close' : '+ Create Property'}
         </button>
       </div>
 
       {showCreate && (
         <div className="bg-white rounded-lg shadow-lg p-8 mb-8 border border-blue-200">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Create Draft Property</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Create Property Listing</h2>
           <p className="text-gray-600 mb-6 text-sm">
-            📝 Create a draft property listing. Admin will review and publish it to make it visible to customers.
+            📝 Create a property listing. Choose "Draft" for admin review or "Available" to publish immediately.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -132,6 +181,17 @@ const AgentProperties = () => {
                 <option value="Condominium">Condominium</option>
                 <option value="Villa">Villa</option>
                 <option value="Apartment">Apartment</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+              <select
+                value={draftForm.status}
+                onChange={(e) => setDraftForm({ ...draftForm, status: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="draft">Draft (Needs admin review)</option>
+                <option value="available">Available (Publish immediately)</option>
               </select>
             </div>
             <div>
@@ -184,16 +244,84 @@ const AgentProperties = () => {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               />
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Image URL</label>
-              <input
-                type="text"
-                value={draftForm.imageUrl}
-                onChange={(e) => setDraftForm({ ...draftForm, imageUrl: e.target.value })}
-                placeholder="https://example.com/image.jpg"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
+            
+            {/* Image Upload Section */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Property Images</label>
+              
+              <div className="space-y-4">
+                {/* Upload Button */}
+                <div className="flex gap-3">
+                  <label className="flex-1 cursor-pointer">
+                    <div className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-center font-semibold transition flex items-center justify-center gap-2">
+                      {uploadingImages ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <span>Uploading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <span>Upload Images</span>
+                        </>
+                      )}
+                    </div>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/jpeg,image/jpg,image/png,image/webp"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      disabled={uploadingImages}
+                    />
+                  </label>
+                  
+                  <input
+                    type="text"
+                    value={draftForm.imageUrl}
+                    onChange={(e) => setDraftForm({ ...draftForm, imageUrl: e.target.value })}
+                    placeholder="Or paste image URL"
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                
+                <p className="text-xs text-gray-600">
+                  📸 Upload multiple images (JPG, PNG, WEBP). Max 5MB per image. First image will be the cover photo.
+                </p>
+                
+                {/* Uploaded Images Preview */}
+                {uploadedImageUrls.length > 0 && (
+                  <div className="grid grid-cols-4 gap-3">
+                    {uploadedImageUrls.map((url, index) => (
+                      <div key={url} className="relative group">
+                        <img
+                          src={url}
+                          alt={`Upload ${index + 1}`}
+                          className="w-full h-24 object-cover rounded-lg border-2 border-gray-300"
+                        />
+                        {index === 0 && (
+                          <div className="absolute top-1 left-1 bg-blue-600 text-white text-xs px-2 py-1 rounded">
+                            Cover
+                          </div>
+                        )}
+                        <button
+                          onClick={() => removeUploadedImage(url)}
+                          className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Remove image"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
+            
             <div className="md:col-span-2">
               <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
               <textarea
@@ -210,7 +338,7 @@ const AgentProperties = () => {
               onClick={handleCreateDraft}
               className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold shadow-md transition"
             >
-              💾 Save Draft
+              {draftForm.status === 'draft' ? '💾 Save as Draft' : '✓ Create & Publish'}
             </button>
             <button
               onClick={() => setShowCreate(false)}

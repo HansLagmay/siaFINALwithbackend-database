@@ -15,23 +15,21 @@ export default function FileMetadataComponent({ metadata }: FileMetadataProps) {
     <div className="bg-gray-50 rounded p-4 space-y-2">
       <div className="grid grid-cols-2 gap-4 text-sm">
         <div>
-          <span className="text-gray-600">📁 Table:</span>
+          <span className="text-gray-600">📁 File:</span>
           <span className="ml-2 font-semibold">{metadata.filename}</span>
         </div>
         <div>
           <span className="text-gray-600">📊 Records:</span>
           <span className="ml-2 font-semibold">{metadata.recordCount}</span>
         </div>
-        {metadata.sizeFormatted && (
-          <div>
-            <span className="text-gray-600">💾 Size:</span>
-            <span className="ml-2 font-semibold">{metadata.sizeFormatted}</span>
-          </div>
-        )}
+        <div>
+          <span className="text-gray-600">💾 Size:</span>
+          <span className="ml-2 font-semibold">{metadata.sizeFormatted}</span>
+        </div>
         <div>
           <span className="text-gray-600">🕐 Modified:</span>
           <span className="ml-2 font-semibold">
-            {metadata.lastModified ? new Date(metadata.lastModified).toLocaleString() : 'N/A'}
+            {new Date(metadata.lastModified).toLocaleString()}
           </span>
         </div>
       </div>

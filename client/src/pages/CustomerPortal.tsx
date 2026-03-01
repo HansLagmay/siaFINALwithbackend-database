@@ -21,9 +21,10 @@ const CustomerPortal = () => {
   const loadProperties = async () => {
     try {
       const response = await propertiesAPI.getAll();
-      setProperties(response.data);
+      setProperties(response.data || []);
     } catch (error) {
       console.error('Failed to load properties:', error);
+      setProperties([]);
     } finally {
       setLoading(false);
     }

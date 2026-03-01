@@ -20,7 +20,7 @@ export interface PropertyStatusHistory {
 
 export interface PropertyViewHistory {
   viewedAt: string;
-  ipAddress?: string; // Optional for analytics
+  ipAddress?: string;
 }
 
 export interface Property {
@@ -36,28 +36,29 @@ export interface Property {
   features: string[];
   status: 'draft' | 'available' | 'reserved' | 'under-contract' | 'sold' | 'withdrawn' | 'off-market';
   imageUrl: string;
+  images?: string[];
   createdBy?: string;
   
   // Status History
   statusHistory: PropertyStatusHistory[];
   
   // Sale information
-  soldBy?: string; // agent name
-  soldByAgentId?: string; // agent ID
-  soldAt?: string; // timestamp
-  salePrice?: number; // final closing price
+  soldBy?: string;
+  soldByAgentId?: string;
+  soldAt?: string;
+  salePrice?: number;
   
   // Commission tracking
   commission?: {
-    rate: number; // percentage (e.g., 3 for 3%)
-    amount: number; // calculated commission amount
+    rate: number;
+    amount: number;
     status: 'pending' | 'paid';
     paidAt?: string;
-    paidBy?: string; // admin who marked as paid
+    paidBy?: string;
   };
   
   // Reservation info
-  reservedBy?: string; // agent name
+  reservedBy?: string;
   reservedAt?: string;
   reservedUntil?: string;
   
@@ -90,7 +91,7 @@ export interface FollowUpReminder {
 
 export interface Inquiry {
   id: string;
-  ticketNumber: string; // "INQ-2026-001" format
+  ticketNumber: string;
   
   // Customer Info
   name: string;
@@ -110,9 +111,9 @@ export interface Inquiry {
           'viewed-interested' | 'viewed-not-interested' |
           'deal-successful' | 'deal-cancelled' | 'no-response';
   
-  assignedTo: string | null; // agent ID
-  claimedBy: string | null; // agent ID (if self-claimed)
-  assignedBy: string | null; // admin ID (if manually assigned)
+  assignedTo: string | null;
+  claimedBy: string | null;
+  assignedBy: string | null;
   claimedAt: string | null;
   assignedAt: string | null;
   

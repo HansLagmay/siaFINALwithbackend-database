@@ -6,9 +6,7 @@ export interface Session {
   expiresAt: number;
 }
 
-// Session duration: 90 days for demo stability
-const SESSION_DURATION_MS = 90 * 24 * 60 * 60 * 1000;
-
+// Store active session ID for each role
 const ACTIVE_SESSION_KEYS: Record<User['role'], string> = {
   admin: 'active_session_admin',
   agent: 'active_session_agent',
@@ -147,7 +145,7 @@ export const setSession = (user: User, token: string): void => {
   const session: Session = {
     user,
     token,
-    expiresAt: Date.now() + SESSION_DURATION_MS
+    expiresAt: Date.now() + (30 * 24 * 60 * 60 * 1000) // 30 days
   };
   // Store session with user ID as key
   localStorage.setItem(getSessionKey(user.id), JSON.stringify(session));
