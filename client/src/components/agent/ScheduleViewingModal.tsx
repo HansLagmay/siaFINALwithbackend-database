@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { calendarAPI, inquiriesAPI, propertiesAPI } from '../../services/api';
+import { calendarAPI, inquiriesAPI } from '../../services/api';
 import type { CalendarEvent, Inquiry, User } from '../../types';
 
 interface ScheduleViewingModalProps {

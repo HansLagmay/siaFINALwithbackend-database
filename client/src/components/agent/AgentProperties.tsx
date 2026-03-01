@@ -187,7 +187,7 @@ const AgentProperties = () => {
               <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
               <select
                 value={draftForm.status}
-                onChange={(e) => setDraftForm({ ...draftForm, status: e.target.value })}
+                onChange={(e) => setDraftForm({ ...draftForm, status: e.target.value as Property['status'] })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               >
                 <option value="draft">Draft (Needs admin review)</option>

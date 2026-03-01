@@ -29,7 +29,7 @@ export default function FileMetadataComponent({ metadata }: FileMetadataProps) {
         <div>
           <span className="text-gray-600">🕐 Modified:</span>
           <span className="ml-2 font-semibold">
-            {new Date(metadata.lastModified).toLocaleString()}
+            {metadata.lastModified ? new Date(metadata.lastModified).toLocaleString() : 'N/A'}
           </span>
         </div>
       </div>
