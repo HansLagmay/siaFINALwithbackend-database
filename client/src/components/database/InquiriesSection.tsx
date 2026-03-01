@@ -18,6 +18,7 @@ export default function InquiriesSection() {
   const [showTable, setShowTable] = useState(false);
   const [showNewInquiries, setShowNewInquiries] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const {
     dialogState,
     toastState,
@@ -48,6 +49,7 @@ export default function InquiriesSection() {
       setNewInquiries(newInqRes.data as Inquiry[]);
     } catch (error) {
       console.error('Failed to fetch inquiries data:', error);
+      setError('Could not load data. Make sure the backend is running and the database is set up.');
     } finally {
       setLoading(false);
     }
@@ -94,6 +96,15 @@ export default function InquiriesSection() {
 
   if (loading) {
     return <div className="text-center py-8">Loading inquiries data...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-6 rounded-lg text-center">
+        <p className="font-semibold">⚠️ Unable to load data</p>
+        <p className="text-sm mt-1">{error}</p>
+      </div>
+    );
   }
 
   const statusBreakdown = getStatusBreakdown();

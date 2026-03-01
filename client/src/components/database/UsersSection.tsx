@@ -18,6 +18,7 @@ export default function UsersSection() {
   const [showTable, setShowTable] = useState(false);
   const [showNewAgents, setShowNewAgents] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const {
     dialogState,
     toastState,
@@ -48,6 +49,7 @@ export default function UsersSection() {
       setNewAgents(newAgentsRes.data as User[]);
     } catch (error) {
       console.error('Failed to fetch users data:', error);
+      setError('Could not load data. Make sure the backend is running and the database is set up.');
     } finally {
       setLoading(false);
     }
@@ -92,6 +94,15 @@ export default function UsersSection() {
 
   if (loading) {
     return <div className="text-center py-8">Loading users data...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-6 rounded-lg text-center">
+        <p className="font-semibold">⚠️ Unable to load data</p>
+        <p className="text-sm mt-1">{error}</p>
+      </div>
+    );
   }
 
   const { admins, agents } = getRoleBreakdown();

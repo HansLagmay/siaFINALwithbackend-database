@@ -36,13 +36,16 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle 401 errors
+// Response interceptor to handle errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     // Note: Removed automatic session clearing and redirect on 401 errors
     // to prevent premature "session expired" messages
     // Components will handle authentication errors as needed
+    if (!error.response && error.request) {
+      error.isBackendOffline = true;
+    }
     return Promise.reject(error);
   }
 );
