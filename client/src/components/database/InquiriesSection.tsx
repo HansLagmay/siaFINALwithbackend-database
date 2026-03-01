@@ -12,7 +12,6 @@ import type { TableRow } from '../../types/api';
 
 export default function InquiriesSection() {
   const [metadata, setMetadata] = useState<FileMetadata | null>(null);
-  const [newMetadata, setNewMetadata] = useState<FileMetadata | null>(null);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [newInquiries, setNewInquiries] = useState<Inquiry[]>([]);
   const [showTable, setShowTable] = useState(false);
@@ -36,15 +35,13 @@ export default function InquiriesSection() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [metaRes, newMetaRes, inqRes, newInqRes] = await Promise.all([
+      const [metaRes, inqRes, newInqRes] = await Promise.all([
         databaseAPI.getFileMetadata('inquiries.json'),
-        databaseAPI.getFileMetadata('new-inquiries.json'),
         databaseAPI.getFile('inquiries.json'),
         databaseAPI.getRecent('inquiries')
       ]);
       
       setMetadata(metaRes.data);
-      setNewMetadata(newMetaRes.data);
       setInquiries(inqRes.data as Inquiry[]);
       setNewInquiries(newInqRes.data as Inquiry[]);
     } catch (error) {
@@ -114,7 +111,7 @@ export default function InquiriesSection() {
       {/* All Inquiries Section */}
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-gray-900">📝 All Inquiries (inquiries.json)</h3>
+          <h3 className="text-xl font-bold text-gray-900">📝 All Inquiries (MySQL: inquiries)</h3>
           <ExportButtons onExport={(format) => handleExport('inquiries.json', format)} />
         </div>
         
@@ -153,7 +150,7 @@ export default function InquiriesSection() {
       {/* New Inquiries Section */}
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-gray-900">⭐ New/Unassigned Inquiries (new-inquiries.json)</h3>
+          <h3 className="text-xl font-bold text-gray-900">⭐ New/Unassigned Inquiries (Last 7 Days)</h3>
           {newInquiries.length > 0 && (
             <button
               onClick={handleClearNew}
@@ -163,8 +160,6 @@ export default function InquiriesSection() {
             </button>
           )}
         </div>
-        
-        <FileMetadataComponent metadata={newMetadata} />
 
         {newInquiries.length === 0 ? (
           <div className="mt-4 text-center py-8 text-gray-500">

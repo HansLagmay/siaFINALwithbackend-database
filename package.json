@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "cd server && node index.js",
+    "server:dev": "cd server && nodemon index.js",
     "client": "cd client && npm run dev",
     "start": "node server/index.js",
     "install:all": "npm install && cd client && npm install",

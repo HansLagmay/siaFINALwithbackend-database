@@ -72,7 +72,7 @@ export default function CalendarSection() {
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-gray-900">📅 All Calendar Events (calendar-events.json)</h3>
+          <h3 className="text-xl font-bold text-gray-900">📅 All Calendar Events (MySQL: calendar_events)</h3>
           <ExportButtons onExport={handleExport} />
         </div>
         

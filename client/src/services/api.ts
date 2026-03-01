@@ -11,7 +11,7 @@ import type {
   DatabaseOverview,
   FileMetadata
 } from '../types';
-import { getToken, clearSession } from '../utils/session';
+import { getToken } from '../utils/session';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -50,15 +50,13 @@ api.interceptors.response.use(
   }
 );
 
-// Pagination response type
+// Pagination response type (matches MySQL backend format)
 export interface PaginatedResponse<T> {
   data: T[];
   pagination: {
-    currentPage: number;
-    totalPages: number;
-    totalRecords: number;
-    hasNext: boolean;
-    hasPrev: boolean;
+    page: number;
+    pages: number;
+    total: number;
     limit: number;
   };
 }
@@ -182,9 +180,9 @@ export const activityLogAPI = {
           ...res,
           data: {
             logs: paginatedData.data,
-            total: paginatedData.pagination.totalRecords,
-            page: paginatedData.pagination.currentPage,
-            totalPages: paginatedData.pagination.totalPages
+            total: paginatedData.pagination.total,
+            page: paginatedData.pagination.page,
+            totalPages: paginatedData.pagination.pages
           }
         };
       }
