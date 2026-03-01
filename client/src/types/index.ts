@@ -217,8 +217,8 @@ export interface DatabaseOverview {
 
 export interface FileMetadata {
   filename: string;
-  size: number;
-  sizeFormatted: string;
+  size?: number;
+  sizeFormatted?: string;
   lastModified: string;
   recordCount: number;
 }

@@ -43,7 +43,7 @@ const AgentDashboard = ({ user }: AgentDashboardProps) => {
         totalInquiries: myInquiries.length,
         pendingInquiries: myInquiries.filter((i: Inquiry) => i.status === 'new' || i.status === 'claimed' || i.status === 'assigned').length,
         contactedInquiries: myInquiries.filter((i: Inquiry) => i.status === 'in-progress').length,
-        closedInquiries: myInquiries.filter((i: Inquiry) => i.status === 'closed' || i.status === 'successful').length
+        closedInquiries: myInquiries.filter((i: Inquiry) => i.status === 'deal-successful' || i.status === 'deal-cancelled').length
       });
 
       setRecentInquiries(

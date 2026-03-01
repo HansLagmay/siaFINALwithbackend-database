@@ -12,7 +12,6 @@ import type { TableRow } from '../../types/api';
 
 export default function PropertiesSection() {
   const [metadata, setMetadata] = useState<FileMetadata | null>(null);
-  const [newMetadata, setNewMetadata] = useState<FileMetadata | null>(null);
   const [properties, setProperties] = useState<Property[]>([]);
   const [newProperties, setNewProperties] = useState<Property[]>([]);
   const [showTable, setShowTable] = useState(false);
@@ -36,15 +35,13 @@ export default function PropertiesSection() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [metaRes, newMetaRes, propsRes, newPropsRes] = await Promise.all([
+      const [metaRes, propsRes, newPropsRes] = await Promise.all([
         databaseAPI.getFileMetadata('properties.json'),
-        databaseAPI.getFileMetadata('new-properties.json'),
         databaseAPI.getFile('properties.json'),
         databaseAPI.getRecent('properties')
       ]);
       
       setMetadata(metaRes.data);
-      setNewMetadata(newMetaRes.data);
       setProperties(propsRes.data as Property[]);
       setNewProperties(newPropsRes.data as Property[]);
     } catch (error) {
@@ -104,7 +101,7 @@ export default function PropertiesSection() {
       {/* All Properties Section */}
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-gray-900">🏠 All Properties (properties.json)</h3>
+          <h3 className="text-xl font-bold text-gray-900">🏠 All Properties (MySQL: properties)</h3>
           <ExportButtons onExport={(format) => handleExport('properties.json', format)} />
         </div>
         
@@ -129,7 +126,7 @@ export default function PropertiesSection() {
       {/* New Properties Section */}
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-gray-900">⭐ Recently Added Properties (new-properties.json)</h3>
+          <h3 className="text-xl font-bold text-gray-900">⭐ Recently Added Properties (Last 7 Days)</h3>
           {newProperties.length > 0 && (
             <button
               onClick={handleClearNew}
@@ -139,8 +136,6 @@ export default function PropertiesSection() {
             </button>
           )}
         </div>
-        
-        <FileMetadataComponent metadata={newMetadata} />
 
         {newProperties.length === 0 ? (
           <div className="mt-4 text-center py-8 text-gray-500">

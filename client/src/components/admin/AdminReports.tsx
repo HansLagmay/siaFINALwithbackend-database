@@ -54,9 +54,9 @@ const AdminReports = () => {
         const agentInquiries = inquiries.filter((i: Inquiry) => i.assignedTo === agent.id);
         const totalInquiries = agentInquiries.length;
         const activeInquiries = agentInquiries.filter((i: Inquiry) => 
-          i.status !== 'closed' && i.status !== 'cancelled'
+          i.status !== 'deal-cancelled' && i.status !== 'no-response'
         ).length;
-        const successfulInquiries = agentInquiries.filter((i: Inquiry) => i.status === 'successful').length;
+        const successfulInquiries = agentInquiries.filter((i: Inquiry) => i.status === 'deal-successful').length;
         const conversionRate = totalInquiries > 0 ? (successfulInquiries / totalInquiries) * 100 : 0;
         
         const soldProperties = properties.filter((p: Property) => p.soldByAgentId === agent.id);

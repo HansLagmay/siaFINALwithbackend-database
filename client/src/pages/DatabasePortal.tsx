@@ -49,7 +49,7 @@ export default function DatabasePortal() {
                 🗄️ TES Property Database Manager
               </h1>
               <p className="text-sm text-gray-600 mt-1">
-                Visual interface for JSON file storage (phpMyAdmin-style)
+                Visual interface for MySQL database (TESdb)
               </p>
             </div>
             <Link 
