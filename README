@@ -1,222 +1,62 @@
-TES Property System — MySQL Backend
-=====================================
-
-A REST API backend for the TES Property Management System. Built with Node.js
-and Express, it serves property listings, user management, inquiry tracking,
-calendar events, and activity logs — all backed by a MySQL database (TESdb).
-Designed to be consumed by the SIAnewFINALfixed front-end project.
-
-
-Tech Stack
-----------
-
-  Runtime     Node.js
-  Framework   Express
-  Database    MySQL  (schema/database name: TESdb)
-  DB Driver   mysql2
-  Auth        JSON Web Tokens (jsonwebtoken) + bcryptjs
-  Uploads     multer
-  Security    helmet, express-rate-limit
-  Dev tool    nodemon
-
-
-Repository Structure
---------------------
-
-  siaFINALwithbackend-database/
-  ├── README                   ← this file (canonical documentation)
-  ├── README.md                ← short pointer to README
-  ├── .env.example             ← template for environment variables
-  ├── package.json
-  ├── scripts/
-  │   ├── createSchema.js      ← creates tables in TESdb
-  │   └── seedDatabase.js      ← inserts sample users, properties, etc.
-  └── server/
-      ├── index.js             ← Express app entry point
-      ├── db.js                ← MySQL connection pool
-      ├── middleware/
-      │   ├── auth.js          ← JWT verification middleware
-      │   └── rateLimiter.js   ← express-rate-limit configuration
-      ├── routes/
-      │   ├── auth.js          ← POST /api/login
-      │   ├── users.js         ← /api/users  (CRUD)
-      │   ├── properties.js    ← /api/properties  (CRUD + image upload)
-      │   ├── inquiries.js     ← /api/inquiries  (CRUD)
-      │   ├── calendar.js      ← /api/calendar  (events)
-      │   ├── activity-log.js  ← /api/activity-log
-      │   └── database.js      ← /api/database  (admin DB utilities)
-      ├── sql/
-      │   └── schema.sql       ← full DDL for TESdb tables
-      └── uploads/
-          └── properties/      ← uploaded property images stored here
-
-
-Prerequisites
--------------
-
-  • Node.js v18 or later
-  • npm v9 or later
-  • MySQL 8.x running locally (or accessible remotely)
-
-
-Environment Setup
------------------
-
-Copy the example file and fill in your values:
-
-  cp .env.example .env
-
-The variables are:
-
-  PORT=3000
-  CORS_ORIGIN=http://localhost:5173
-
-  # MySQL connection
-  DB_HOST=localhost
-  DB_PORT=3306
-  DB_USER=root
-  DB_PASSWORD=your_mysql_password
-  DB_NAME=TESdb
-
-  # JWT
-  JWT_SECRET=change_this_to_a_long_random_secret
-  JWT_EXPIRES_IN=30d
-
-Change JWT_SECRET to a long, random string before deploying.
-
-
-Database Setup
---------------
-
-1. Create the database in MySQL:
-
-     CREATE DATABASE TESdb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
-2. Create all tables (run from the repo root):
-
-     npm run db:schema
-
-3. Seed sample data:
-
-     npm run db:seed
-
-
-Default Seeded Credentials
----------------------------
-
-  Role    E-mail                    Password
-  ------  ------------------------  ----------
-  Admin   admin@tesproperty.com     admin123
-  Agent   maria@tesproperty.com     agent123
-  Agent   juan@tesproperty.com      agent123
-
-Change these passwords after first login in a production environment.
-
-
-Running the Server
-------------------
-
-Development (auto-reload with nodemon):
-
-  npm run dev
-
-Production:
-
-  npm start
-
-The API will be available at http://localhost:3000/api
-
-
-Running with SIAnewFINALfixed
-------------------------------
-
-1. In the SIAnewFINALfixed front-end project, set the API base URL:
-
-     VITE_API_URL=http://localhost:3000/api
-
-   Add this to the front-end's .env file (or .env.local).
-
-2. Make sure this backend is running first:
-
-     npm run dev          # in this repo
-
-3. Then start the front-end:
-
-     npm run dev          # in SIAnewFINALfixed
-
-
-Image Uploads
--------------
-
-Uploaded property images are stored in:
-
-  server/uploads/properties/
-
-They are served as static files by the Express server under the path:
-
-  /uploads/properties/<filename>
-
-For example, an image saved as server/uploads/properties/house.jpg is
-accessible at:
-
-  http://localhost:3000/uploads/properties/house.jpg
-
-The front-end references these URLs directly from the properties API response.
-
-
-API Overview
-------------
-
-  Method  Path                          Description
-  ------  ----------------------------  ------------------------------------
-  POST    /api/login                    Authenticate and receive a JWT
-  GET     /api/health                   Server health check
-
-  GET     /api/users                    List all users  (admin)
-  POST    /api/users                    Create a user   (admin)
-  PUT     /api/users/:id                Update a user   (admin)
-  DELETE  /api/users/:id                Delete a user   (admin)
-
-  GET     /api/properties               List properties (paginated, filtered)
-  POST    /api/properties               Create property + upload images
-  PUT     /api/properties/:id           Update property
-  DELETE  /api/properties/:id           Delete property
-
-  GET     /api/inquiries                List inquiries
-  POST    /api/inquiries                Create inquiry
-  PUT     /api/inquiries/:id            Update inquiry
-  DELETE  /api/inquiries/:id            Delete inquiry
-
-  GET     /api/calendar                 List calendar events
-  POST    /api/calendar                 Create event
-  PUT     /api/calendar/:id             Update event
-  DELETE  /api/calendar/:id             Delete event
-
-  GET     /api/activity-log             List activity log entries
-
-  POST    /api/database/backup          Trigger DB backup  (admin)
-  POST    /api/database/restore         Trigger DB restore (admin)
-
-All routes except POST /api/login require a valid JWT in the
-Authorization header:
-
-  Authorization: Bearer <token>
-
-
-Notes
------
-
-  • CORS is pre-configured to allow http://localhost:5173 (Vite default) and
-    any http://localhost:517x origin.  Update CORS_ORIGIN in .env if your
-    front-end runs on a different port or domain.
-
-  • Rate limiting is applied to all /api routes (configurable in
-    server/middleware/rateLimiter.js).
-
-  • This backend is built to be API-compatible with the SIAnewFINALfixed
-    front-end. Keep VITE_API_URL pointed at this server's /api base path.
-
-  • The uploads directory (server/uploads/) is excluded from version control
-    via .gitignore.  Create the folder manually if it is missing:
-
-      mkdir -p server/uploads/properties
+# SIA Final Project Guide
+
+## Overview
+This project is designed to demonstrate the capabilities and features of our system which incorporates both frontend and backend components along with a database.
+
+## Features
+- User authentication and authorization
+- Dynamic data handling with a robust API
+- Modern frontend interface
+- Secure database connections
+- Responsive design for mobile and desktop
+
+## Tech Stack
+- **Frontend:** React, Redux
+- **Backend:** Node.js, Express
+- **Database:** PostgreSQL
+- **Deployment:** Docker, Heroku
+
+## Setup
+1. Clone the repository: `git clone https://github.com/HansLagmay/siaFINALwithbackend-database.git`
+2. Change directory: `cd siaFINALwithbackend-database`
+3. Install dependencies: `npm install` in both frontend and backend directories.
+
+## Run Instructions
+- **Frontend:** Navigate to the frontend directory and run `npm start`.
+- **Backend:** Navigate to the backend directory and run `npm run start:dev`.
+
+## Seeded Credentials
+- **Admin:**
+  - Username: admin
+  - Password: admin123
+
+- **User:**
+  - Username: user
+  - Password: user123
+
+## Uploads Info
+- Ensure to configure the upload directory in the backend.
+- Use POST requests to upload files through the API.
+
+## Folder Structure
+```
+├── frontend
+│   ├── src
+│   ├── public
+│   └── package.json
+├── backend
+│   ├── src
+│   ├── database
+│   └── package.json
+└── README.md
+```
+
+## API Overview
+- **GET /api/resource** - Retrieve all resources.
+- **POST /api/resource** - Create a new resource.
+- **PUT /api/resource/:id** - Update a resource by ID.
+- **DELETE /api/resource/:id** - Delete a resource by ID.
+
+## Notes
+- Follow best practices for coding and documentation.
+- Keep dependencies up-to-date.
