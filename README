@@ -1,37 +1,111 @@
-# SIA Backend
+# TES Property System — MySQL Backend
 
-This is the backend for the SIA application.
+Express.js REST API backed by MySQL (TESdb). API-compatible with the SIAnewFINALfixed frontend.
 
-## Setup Instructions
+## Prerequisites
 
-1. Clone the repository
-2. Install dependencies
+- Node.js 16+
+- MySQL 8.0+
+
+## Setup
+
+1. **Install dependencies**
    ```bash
    npm install
    ```
-3. Create a `.env` file based on the `.env.example` file
-4. Run the database migrations
+
+2. **Configure environment**
    ```bash
-   npm run migrate
+   cp .env.example .env
+   # Edit .env and set your MySQL credentials and JWT secret
    ```
-5. Seed the database with sample data
+
+3. **Create database schema**
    ```bash
-   npm run seed
+   npm run db:schema
    ```
-6. Start the server
+
+4. **Seed sample data** (creates default users, properties, inquiries, calendar events)
    ```bash
-   npm start
+   npm run db:seed
    ```
+
+5. **Start the server**
+   ```bash
+   npm start          # production
+   npm run dev        # development (nodemon)
+   ```
+
+## Default Credentials
+
+| Email                       | Password  | Role  |
+|-----------------------------|-----------|-------|
+| admin@tesproperty.com       | admin123  | admin |
+| maria@tesproperty.com       | agent123  | agent |
+| juan@tesproperty.com        | agent123  | agent |
 
 ## API Endpoints
 
-- POST `/api/login` - User login
-- GET `/api/users` - Get users
-- POST `/api/users` - Create a new user
-- PUT `/api/users/:id` - Update user by ID
-- DELETE `/api/users/:id` - Delete user by ID
-- GET `/api/properties` - Get properties
-- POST `/api/properties` - Create a new property
-- PUT `/api/properties/:id` - Update property by ID
-- DELETE `/api/properties/:id` - Delete property by ID
-- ...
+### Auth
+| Method | Path       | Auth | Description        |
+|--------|------------|------|--------------------|
+| POST   | /api/login | —    | Login, returns JWT |
+
+### Users
+| Method | Path              | Auth  | Description        |
+|--------|-------------------|-------|--------------------|
+| GET    | /api/users        | JWT   | List all users     |
+| GET    | /api/users/agents | JWT   | List agents only   |
+| POST   | /api/users        | admin | Create agent       |
+| DELETE | /api/users/:id    | admin | Delete user        |
+
+### Properties
+| Method | Path                    | Auth  | Description                |
+|--------|-------------------------|-------|----------------------------|
+| GET    | /api/properties         | —     | List properties (paginated)|
+| GET    | /api/properties/:id     | —     | Get single property        |
+| POST   | /api/properties/upload  | admin | Upload images              |
+| POST   | /api/properties         | admin | Create property            |
+| POST   | /api/properties/draft   | agent | Create draft property      |
+| PUT    | /api/properties/:id     | admin | Update property            |
+| DELETE | /api/properties/:id     | admin | Delete property            |
+
+### Inquiries
+| Method | Path                          | Auth  | Description              |
+|--------|-------------------------------|-------|--------------------------|
+| GET    | /api/inquiries                | JWT   | List inquiries (paginated)|
+| GET    | /api/inquiries/:id            | JWT   | Get single inquiry       |
+| POST   | /api/inquiries                | —     | Submit inquiry (public)  |
+| PUT    | /api/inquiries/:id            | JWT   | Update inquiry           |
+| DELETE | /api/inquiries/:id            | admin | Delete inquiry           |
+| POST   | /api/inquiries/:id/claim      | agent | Claim inquiry            |
+| POST   | /api/inquiries/:id/assign     | admin | Assign inquiry to agent  |
+| GET    | /api/inquiries/agents/workload| JWT   | Agent workload stats     |
+
+### Calendar
+| Method | Path                          | Auth  | Description              |
+|--------|-------------------------------|-------|--------------------------|
+| GET    | /api/calendar                 | JWT   | List events (paginated)  |
+| GET    | /api/calendar/agent/:agentId  | JWT   | Agent's events           |
+| POST   | /api/calendar                 | JWT   | Create event             |
+| PUT    | /api/calendar/:id             | JWT   | Update event             |
+| DELETE | /api/calendar/:id             | JWT   | Delete event             |
+
+### Other
+| Method | Path                    | Auth  | Description           |
+|--------|-------------------------|-------|-----------------------|
+| GET    | /api/activity-log       | JWT   | Activity log (paginated)|
+| GET    | /api/database/overview  | admin | Database stats        |
+| GET    | /api/health             | —     | Health check          |
+
+## Uploads
+
+Property images are stored in `server/uploads/properties/` and served at `/uploads/properties/<filename>`.
+
+Each property response includes:
+- `imageUrl` — primary image URL (backward-compatible)
+- `images` — array of all image URLs
+
+## Environment Variables
+
+See `.env.example` for all available settings.
